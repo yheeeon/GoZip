@@ -260,31 +260,31 @@
 
 ```mermaid
 flowchart TB
-    subgraph CLIENT["👤 Client"]
+    subgraph CLIENT["Client"]
         USER[사용자]
     end
 
-    subgraph FRONTEND["🎨 Frontend Layer"]
+    subgraph FRONTEND["Frontend Layer"]
         NEXT["Next.js 14<br/>챗봇 UI | 지도 검색 | 매물 비교 | 찜 목록"]
     end
 
-    subgraph BACKEND["⚙️ Backend Layer"]
+    subgraph BACKEND["Backend Layer"]
         DJANGO["Django REST API<br/>JWT 인증 | 매물 CRUD | 커뮤니티 API"]
     end
 
-    subgraph AI_SERVICES["🤖 AI Services"]
+    subgraph AI_SERVICES["AI Services"]
         RAG["RAG Server (FastAPI)<br/>LangGraph | 챗봇 응답"]
         RECO["Reco Server (FastAPI)<br/>신뢰도 ML | 가격 ML"]
     end
 
-    subgraph DATA["🗄️ Data Layer"]
+    subgraph DATA["Data Layer"]
         NEO4J[(Neo4j)]
         POSTGRES[(PostgreSQL)]
         ES[(Elasticsearch)]
         REDIS[(Redis)]
     end
 
-    subgraph EXTERNAL["🌐 External"]
+    subgraph EXTERNAL["External"]
         OPENAI["OpenAI API<br/>GPT-4o-mini"]
     end
 
@@ -467,13 +467,13 @@ Zscore_조정 = Zscore + 대표자구분_가중치
 </td>
 <td width="50%">
 
-#### 등급별 성능 (LightGBM)
+#### 혼동행렬 (LightGBM)
 
-| 등급 | Precision | Recall | F1 |
+| 등급 | 저렴 | 적정 | 비 |
 |:----:|:---------:|:------:|:--:|
-| 저렴 | 0.85 | 0.85 | 0.85 |
-| 적정 | 0.63 | 0.63 | 0.63 |
-| 비쌈 | 0.74 | 0.74 | 0.74 |
+| 저렴 | 0.85 | 0.13 | 0.02 |
+| 적정 | 0.24 | 0.63 | 0.13 |
+| 비쌈 | 0.02 | 0.24 | 0.73 |
 
 </td>
 </tr>
