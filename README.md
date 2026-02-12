@@ -260,31 +260,31 @@
 
 ```mermaid
 flowchart TB
-    subgraph CLIENT["👤 Client"]
+    subgraph CLIENT["Client"]
         USER[사용자]
     end
 
-    subgraph FRONTEND["🎨 Frontend Layer"]
+    subgraph FRONTEND["Frontend Layer"]
         NEXT["Next.js 14<br/>챗봇 UI | 지도 검색 | 매물 비교 | 찜 목록"]
     end
 
-    subgraph BACKEND["⚙️ Backend Layer"]
+    subgraph BACKEND["Backend Layer"]
         DJANGO["Django REST API<br/>JWT 인증 | 매물 CRUD | 커뮤니티 API"]
     end
 
-    subgraph AI_SERVICES["🤖 AI Services"]
+    subgraph AI_SERVICES["AI Services"]
         RAG["RAG Server (FastAPI)<br/>LangGraph | 챗봇 응답"]
         RECO["Reco Server (FastAPI)<br/>신뢰도 ML | 가격 ML"]
     end
 
-    subgraph DATA["🗄️ Data Layer"]
+    subgraph DATA["Data Layer"]
         NEO4J[(Neo4j)]
         POSTGRES[(PostgreSQL)]
         ES[(Elasticsearch)]
         REDIS[(Redis)]
     end
 
-    subgraph EXTERNAL["🌐 External"]
+    subgraph EXTERNAL["External"]
         OPENAI["OpenAI API<br/>GPT-4o-mini"]
     end
 
@@ -467,13 +467,13 @@ Zscore_조정 = Zscore + 대표자구분_가중치
 </td>
 <td width="50%">
 
-#### 등급별 성능 (LightGBM)
+#### 혼동행렬 (LightGBM)
 
-| 등급 | Precision | Recall | F1 |
+| 등급 | 저렴 | 적정 | 비쌈 |
 |:----:|:---------:|:------:|:--:|
-| 저렴 | 0.85 | 0.85 | 0.85 |
-| 적정 | 0.63 | 0.63 | 0.63 |
-| 비쌈 | 0.74 | 0.74 | 0.74 |
+| 저렴 | 0.85 | 0.13 | 0.02 |
+| 적정 | 0.24 | 0.63 | 0.13 |
+| 비쌈 | 0.02 | 0.24 | 0.73 |
 
 </td>
 </tr>
@@ -486,6 +486,36 @@ Zscore_조정 = Zscore + 대표자구분_가중치
 3. **자치구_월별_임대료수준_구간** - 최근 지역 임대료 수준
 
 ![가격 적정성 모델](assets/image-2.png)
+
+#### 💰 Cost-Sensitive Learning
+
+부동산 가격 분류에서 저렴한 매물을 비싸다고 예측하거나, 비싼 매물을 저렴하다고 예측하는 **치명적 오류(Extreme Error)** 는 사용자 경험에 큰 영향을 주기에, 이를 해결하기 위해 Cost-Sensitive Learning을 적용했다.
+
+**비용 행렬 (Cost Matrix)**
+
+| 실제 \ 예측 | 저렴(0) | 적정(1) | 비쌈(2) |
+|:-----------:|:-------:|:-------:|:-------:|
+| **저렴(0)** | 0 | 1 | **4** ⚠️ |
+| **적정(1)** | 1 | 0 | 1 |
+| **비쌈(2)** | **4** ⚠️ | 1 | 0 |
+
+> 저렴 ↔ 비쌈 간 오분류는 비용 **4** (인접 클래스 오분류 대비 4배)
+
+**2단계 학습 전략**
+
+```
+Stage 1: class_weight 기반 초기 학습
+  → 클래스 불균형 보정 (LightGBM class_weight='balanced')
+
+Stage 2: 비용 기반 Sample Weight 재학습
+  → Stage 1 모델의 예측 확률로 예상 비용 계산
+  → E[Cost] = Σ P(pred=j) × Cost(true=i, pred=j)
+  → 오분류 비용이 높은 샘플에 더 큰 가중치 부여 후 재학습
+```
+
+**Threshold 조정**: 저렴(0) 클래스 예측 시 보수적 임계값 적용 (conservative_factor=1.2)하여 확신이 낮은 극단 예측을 억제
+
+**Extreme Error Rate**: 저렴 ↔ 비쌈 간 치명적 오류율을 별도 메트릭으로 추적하여 모델 안정성 모니터링
 
 ---
 
