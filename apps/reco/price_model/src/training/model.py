@@ -13,29 +13,29 @@ def get_models() -> Dict[str, object]:
         모델 딕셔너리 {모델명: 모델 객체}
     """
     models = {
-        "XGBoost": XGBClassifier(
-            n_estimators=1200,       # 3000 -> 1200 (트리 수 감소)
-            learning_rate=0.03,
+        # "XGBoost": XGBClassifier(
+        #     n_estimators=1200,       # 3000 -> 1200 (트리 수 감소)
+        #     learning_rate=0.03,
 
-            # 트리 복잡도 ↓
-            max_depth=4,            # 5 -> 4
-            min_child_weight=30,    # 20 -> 30
+        #     # 트리 복잡도 ↓
+        #     max_depth=4,            # 5 -> 4
+        #     min_child_weight=30,    # 20 -> 30
 
-            # 샘플링 ↓
-            subsample=0.6,          # 0.7 -> 0.6
-            colsample_bytree=0.6,   # 0.7 -> 0.6
+        #     # 샘플링 ↓
+        #     subsample=0.6,          # 0.7 -> 0.6
+        #     colsample_bytree=0.6,   # 0.7 -> 0.6
 
-            # 규제 강화
-            reg_alpha=3.0,          # 2.0 -> 3.0
-            reg_lambda=15.0,        # 10.0 -> 15.0
-            gamma=1.0,
+        #     # 규제 강화
+        #     reg_alpha=3.0,          # 2.0 -> 3.0
+        #     reg_lambda=15.0,        # 10.0 -> 15.0
+        #     gamma=1.0,
 
-            objective="multi:softprob",
-            num_class=3,
-            eval_metric="mlogloss",
-            random_state=42,
-            n_jobs=-1,
-        ),
+        #     objective="multi:softprob",
+        #     num_class=3,
+        #     eval_metric="mlogloss",
+        #     random_state=42,
+        #     n_jobs=-1,
+        # ),
 
         "LightGBM": LGBMClassifier(
             n_estimators=2000,        # 충분히 크게 두고, trainer.py에서 early stopping 사용
@@ -60,8 +60,16 @@ def get_models() -> Dict[str, object]:
             metric="multi_logloss",
             random_state=42,
             n_jobs=-1,
-            class_weight="balanced",
-            is_unbalance=True,
+            
+            # ★★★ Cost-Sensitive Learning: Custom class_weight ★★★
+            # 클래스 0(저렴)과 클래스 2(비쌈)의 오분류 비용이 높으므로 가중치 증가
+            # 저렴↔비쌈 오분류를 줄이기 위해 양 극단 클래스의 가중치를 높임
+            class_weight={
+                0: 2.0,  # 저렴 (치명적 오류 방지)
+                1: 1.0,  # 적정 (기본)
+                2: 2.0   # 비쌈 (치명적 오류 방지)
+            },
+            is_unbalance=False,  # class_weight 사용 시 False로 설정
             verbosity=-1,    
         ),
     }
